@@ -12,17 +12,17 @@ var client = new Twitter({
 
 
 
-// Create a new websocket server on port 3000
-console.log('Ready. On Minecraft chat, type /connect localhost:3000')
+//ポート8000番でサーバーを作成する
+console.log('Ready. On Minecraft chat, type /connect localhost:8000')
 const wss = new WebSocket.Server({ port: 8000 })
 
-// On Minecraft, when you type "/connect localhost:3000" it creates a connection
+//マイクラ側から接続があった場合(/connect サーバーのIPアドレス:8000)
 wss.on('connection', socket => {
   console.log('Connected')
   const sendQueue = []        // Queue of commands to be sent
   const awaitedQueue = {}     // Queue of responses awaited from Minecraft
 
-  // Tell Minecraft to send all chat messages. Required once after Minecraft starts
+  //すべてのチャットメッセージを送信するようにMinecraftに指示。 Minecraftの起動後に1回必要。
   socket.send(JSON.stringify({
     "header": {
       "version": 1,                     // We're using the version 1 message protocol
@@ -35,63 +35,61 @@ wss.on('connection', socket => {
     },
   }))
 
-  // When MineCraft sends a message (e.g. on player chat), act on it.
+  //マイクラからメッセージが送られてきたとき
   socket.on('message', packet => {
     const msg = JSON.parse(packet)
-    // If this is a chat window
+    //それが、チャットの時
     if (msg.body.eventName === 'PlayerMessage') {
-      // ... and it's like "pyramid 10" (or some number), draw a pyramid
       
+      //チャットの内容がtweet 何かの文字列
       const match = msg.body.properties.Message.match(/^tweet /u)
       if (match){
+        //msg.body.properties.Message.matchからtweetを削除
         const replaced = msg.body.properties.Message.replace('tweet', ' ')
+        //関数の実行
         tweet_in_mc(replaced)
       }
     }
-    // If we get a command response
+    //コマンドリスポンスを受け取ったとき
     if (msg.header.messagePurpose == 'commandResponse') {
-      // ... and it's for an awaited command
       if (msg.header.requestId in awaitedQueue) {
-        // Print errors (if any)
         if (msg.body.statusCode < 0)
           console.log(awaitedQueue[msg.header.requestId].body.commandLine, msg.body.statusMessage)
-        // ... and delete it from the awaited queue
         delete awaitedQueue[msg.header.requestId]
       }
     }
-    // Now, we've cleared all completed commands from the awaitedQueue.
-    // We can send new commands from the sendQueue -- up to a maximum of 100.
+   
     let count = Math.min(100 - Object.keys(awaitedQueue).length, sendQueue.length)
     for (let i = 0; i < count; i++) {
-      // Each time, send the first command in sendQueue, and add it to the awaitedQueue
+   
       let command = sendQueue.shift()
       socket.send(JSON.stringify(command))
       awaitedQueue[command.header.requestId] = command
     }
-    // Now we've sent as many commands as we can. Wait till the next PlayerMessage/commandResponse
+   
   })
 
-  // Send a command to MineCraft
+  //コマンドをマイクラへ送る
   function send(cmd) {
     const msg = {
       "header": {
         "version": 1,
-        "requestId": uuid.v4(),     // Send unique ID each time
+        "requestId": uuid.v4(),     
         "messagePurpose": "commandRequest",
         "messageType": "commandRequest"
       },
       "body": {
         "version": 1,
-        "commandLine": cmd,         // Define the command
+        "commandLine": cmd,         
         "origin": {
-          "type": "player"          // Message comes from player
+          "type": "player"          
         }
       }
     }
-    sendQueue.push(msg)            // Add the message to the queue
+    sendQueue.push(msg)            
   }
 
-  // Draw a pyramid of size "size" around the player.
+  //ツイートする関数
   function tweet_in_mc(content) {
 
     send(`say tweeted:${content}`)
@@ -107,7 +105,7 @@ wss.on('connection', socket => {
     });
 
   }
-
+//接続が切断された時のログ
   socket.on('close', packet => {
     const msg = JSON.parse(packet)
 
