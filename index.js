@@ -10,11 +10,14 @@ var client = new Twitter({
     access_token_secret: ''
 });
 
+let ip = "192.168.0.100"
+
+let port = "8000"
 
 
 //ポート8000番でサーバーを作成する
-console.log('Ready. On Minecraft chat, type /connect localhost:8000')
-const wss = new WebSocket.Server({ port: 8000 })
+console.log('Ready. On Minecraft chat, type /connect '+ip+':'+port)
+const wss = new WebSocket.Server({ port: port})
 
 //マイクラ側から接続があった場合(/connect サーバーのIPアドレス:8000)
 wss.on('connection', socket => {
