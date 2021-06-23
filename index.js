@@ -2,7 +2,7 @@ const WebSocket = require('ws')
 const uuid = require('uuid')
 var Twitter = require('twitter');
 
-
+//Twitterのキー設定
 var client = new Twitter({
     consumer_key: '',
     consumer_secret: '',
