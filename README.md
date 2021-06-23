@@ -5,3 +5,5 @@ apiのキーを設定して、cd index.jsがあるファイルのパスで移動
 Minecraft BE側で(/connect index.jsに設定したIP:ポート番号)を実行
 
 tweet 内容でツイートできます。
+
+※パソコンのIPアドレスを固定しておくことをおすすめします。
